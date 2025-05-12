@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lupa Play</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-300 to-blue-200 min-h-screen flex items-center justify-center">
+  <div class="bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-lg max-w-xl w-full">
+    <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-6 text-center">
+      Lupa Play
+    </h1>
+    <form id="search-form" class="mb-4">
+      <label for="movie-input" class="block text-gray-700 mb-2 font-medium">Descubra sobre o seu filme:</label>
+      <div class="flex gap-2">
+        <input type="text" id="movie-input" placeholder="Digite o nome do filme..." required
+          class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
+        <button type="submit"
+          class="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold px-5 py-3 rounded-lg hover:opacity-90 transition">
+          Buscar
+        </button>
+      </div>
+    </form>
+    <div id="response-area" class="bg-purple-50 p-4 rounded-lg min-h-[100px] text-gray-800">
+      <p>Aguardando sua busca...</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
