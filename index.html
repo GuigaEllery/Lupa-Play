@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lupa Play</title>
   <style>
     :root {
-      --gradient: linear-gradient(135deg, #4f46e5, #6366f1, #3b82f6);
+      --gradient: linear-gradient(135deg, #4f46e5, #8b5cf6, #3b82f6);
       --bg-light: #f4f4f9;
       --bg-dark: #121212;
       --text-light: #333;
@@ -27,7 +27,7 @@
       transition: all 0.3s ease;
     }
 
-    .dark-mode {
+    body.dark-mode {
       background-color: var(--bg-dark);
       color: var(--text-dark);
     }
@@ -38,6 +38,7 @@
       -webkit-text-fill-color: transparent;
       font-size: 2.5rem;
       margin-bottom: 1rem;
+      text-align: center;
     }
 
     input, button {
@@ -72,7 +73,7 @@
       right: 20px;
       background: transparent;
       border: none;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       cursor: pointer;
       color: inherit;
     }
@@ -81,7 +82,7 @@
 <body>
   <button class="theme-toggle" onclick="toggleTheme()">🌗</button>
   <h1>Lupa Play</h1>
-  <input type="text" id="question" placeholder="Onde posso assistir..." />
+  <input type="text" id="question" placeholder="Onde posso assistir?" />
   <button onclick="askGPT()">Buscar</button>
   <div id="response"></div>
 
@@ -91,9 +92,14 @@
     }
 
     async function askGPT() {
-      const input = document.getElementById('question').value;
+      const input = document.getElementById('question').value.trim();
       const responseDiv = document.getElementById('response');
       responseDiv.textContent = 'Consultando...';
+
+      if (!input) {
+        responseDiv.textContent = 'Digite o nome de um filme ou série.';
+        return;
+      }
 
       try {
         const res = await fetch('/api/lupa-play', {
@@ -101,10 +107,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: input })
         });
+
         const data = await res.json();
-        responseDiv.textContent = data.response;
+        responseDiv.textContent = data.response || 'Não foi possível obter uma resposta.';
       } catch (err) {
-        responseDiv.textContent = 'Erro ao conectar com o Lupa Play.';
+        responseDiv.textContent = 'Erro ao conectar com o servidor.';
       }
     }
   </script>
