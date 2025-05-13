@@ -1,4 +1,3 @@
-
 document.getElementById('search-form').addEventListener('submit', async function (e) {
     e.preventDefault();
     const query = document.getElementById('movie-input').value.trim();

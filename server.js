@@ -1,8 +1,7 @@
-
 const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 require('dotenv').config();
 app.use(express.static('.'));
@@ -35,5 +34,5 @@ app.post('/api/lupa', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
