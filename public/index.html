@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lupa Play</title>
+  <style>
+    :root {
+      --gradient: linear-gradient(135deg, #4f46e5, #8b5cf6, #3b82f6);
+      --bg-light: #f4f4f9;
+      --bg-dark: #121212;
+      --text-light: #333;
+      --text-dark: #f4f4f4;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      transition: all 0.3s ease;
+    }
+
+    body.dark-mode {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h1 {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    input, button {
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      margin: 0.5rem;
+    }
+
+    input {
+      width: 300px;
+      border: 2px solid #ccc;
+    }
+
+    button {
+      background: var(--gradient);
+      color: white;
+      cursor: pointer;
+    }
+
+    #response {
+      margin-top: 2rem;
+      white-space: pre-line;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: inherit;
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()">🌗</button>
+  <h1>Lupa Play</h1>
+  <input type="text" id="question" placeholder="Onde posso assistir?" />
+  <button onclick="askGPT()">Buscar</button>
+  <div id="response"></div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    async function askGPT() {
+      const input = document.getElementById('question').value.trim();
+      const responseDiv = document.getElementById('response');
+      responseDiv.textContent = 'Consultando...';
+
+      if (!input) {
+        responseDiv.textContent = 'Digite o nome de um filme ou série.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/lupa-play', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: input })
+        });
+
+        const data = await res.json();
+        responseDiv.textContent = data.response || 'Não foi possível obter uma resposta.';
+      } catch (err) {
+        responseDiv.textContent = 'Erro ao conectar com o servidor.';
+      }
+    }
+  </script>
+</body>
+</html>
