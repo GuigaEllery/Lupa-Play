@@ -24,27 +24,24 @@ app.post('/api/lupa-play', async (req, res) => {
   }
 
   try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'OpenAI-Beta': 'assistants=v1'
+    };
+
     // Criar nova thread
     const threadRes = await fetch('https://api.openai.com/v1/threads', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'OpenAI-Beta': 'assistants=v1'
-      }
+      headers
     });
-
     const thread = await threadRes.json();
     const threadId = thread.id;
 
     // Adicionar mensagem à thread
     await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'OpenAI-Beta': 'assistants=v1'
-      },
+      headers,
       body: JSON.stringify({
         role: 'user',
         content: userMessage
@@ -54,44 +51,43 @@ app.post('/api/lupa-play', async (req, res) => {
     // Executar o assistente
     const runRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'OpenAI-Beta': 'assistants=v1'
-      },
+      headers,
       body: JSON.stringify({ assistant_id: ASSISTANT_ID })
     });
-
     const run = await runRes.json();
 
-    // Verificar se a execução está concluída (simples polling)
+    // Polling com timeout máximo de 20 segundos
     let status = 'in_progress';
-    let messages = [];
-    while (status !== 'completed') {
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    while (status === 'in_progress' || status === 'queued') {
+      if (attempts >= maxAttempts) {
+        return res.status(504).json({ response: 'Tempo limite excedido. Tente novamente em instantes.' });
+      }
+
       await new Promise(resolve => setTimeout(resolve, 1000));
       const statusRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${run.id}`, {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'OpenAI-Beta': 'assistants=v1'
-        }
+        headers
       });
       const runStatus = await statusRes.json();
       status = runStatus.status;
+      attempts++;
+
+      if (status === 'failed' || status === 'cancelled') {
+        return res.status(500).json({ response: `A execução falhou com status: ${status}.` });
+      }
     }
 
-    // Buscar as mensagens da thread após a conclusão
+    // Buscar a resposta
     const msgRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'OpenAI-Beta': 'assistants=v1'
-      }
+      headers
     });
-
     const msgData = await msgRes.json();
-    messages = msgData.data;
+    const messages = msgData.data || [];
 
     const lastMessage = messages.find(m => m.role === 'assistant');
-    const reply = lastMessage ? lastMessage.content[0].text.value : 'Erro ao recuperar resposta do assistente.';
+    const reply = lastMessage ? lastMessage.content[0].text.value : 'Resposta não encontrada.';
 
     res.json({ response: reply });
 
