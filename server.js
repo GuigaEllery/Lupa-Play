@@ -27,11 +27,11 @@ app.post('/api/lupa-play', async (req, res) => {
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'OpenAI-Beta': 'assistants=v1'
+      'OpenAI-Beta': 'assistants=v2'
     };
 
     // Criar nova thread
-    const threadRes = await fetch('https://api.openai.com/v1/threads', {
+    const threadRes = await fetch('https://api.openai.com/v2/threads', {
       method: 'POST',
       headers
     });
@@ -39,7 +39,7 @@ app.post('/api/lupa-play', async (req, res) => {
     const threadId = thread.id;
 
     // Adicionar mensagem à thread
-    await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+    await fetch(`https://api.openai.com/v2/threads/${threadId}/messages`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -49,7 +49,7 @@ app.post('/api/lupa-play', async (req, res) => {
     });
 
     // Executar o assistente
-    const runRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+    const runRes = await fetch(`https://api.openai.com/v2/threads/${threadId}/runs`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ assistant_id: ASSISTANT_ID })
@@ -67,7 +67,7 @@ app.post('/api/lupa-play', async (req, res) => {
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const statusRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${run.id}`, {
+      const statusRes = await fetch(`https://api.openai.com/v2/threads/${threadId}/runs/${run.id}`, {
         headers
       });
       const runStatus = await statusRes.json();
@@ -80,7 +80,7 @@ app.post('/api/lupa-play', async (req, res) => {
     }
 
     // Buscar a resposta
-    const msgRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+    const msgRes = await fetch(`https://api.openai.com/v2/threads/${threadId}/messages`, {
       headers
     });
     const msgData = await msgRes.json();
