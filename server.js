@@ -29,8 +29,9 @@ app.post('/api/lupa', async (req, res) => {
         const data = await openaiRes.json();
         res.json({ response: data.choices[0].message.content });
     } catch (error) {
-        res.status(500).json({ response: 'Erro na comunicação com o GPT.' });
-    }
+    console.error('Erro ao comunicar com a OpenAI:', error);
+    res.status(500).json({ response: 'Erro na comunicação com o GPT.' });
+  }
 });
 
 app.listen(PORT, () => {
