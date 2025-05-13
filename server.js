@@ -1,6 +1,6 @@
 
 // Arquivo: server.js
-// Backend que acessa diretamente um Assistente da OpenAI criado na plataforma API
+// Backend que acessa diretamente um Assistente da OpenAI criado na plataforma API (v2)
 
 const express = require('express');
 const fetch = require('node-fetch');
@@ -27,7 +27,7 @@ app.post('/api/lupa-play', async (req, res) => {
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'OpenAI-Beta': 'assistants=v1'
+      'OpenAI-Beta': 'assistants=v2'
     };
 
     // Criar nova thread
