@@ -4,6 +4,7 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,10 @@ app.use(express.json());
 
 app.post('/api/lupa-play', async (req, res) => {
   const userMessage = req.body.message;
+
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ response: 'Chave da API OpenAI não configurada.' });
+  }
 
   const messages = [
     {
@@ -48,15 +53,21 @@ Use este formato:
 
     const data = await response.json();
 
-    if (data.choices && data.choices[0]) {
+    if (data?.choices?.[0]?.message?.content) {
       res.json({ response: data.choices[0].message.content });
     } else {
+      console.error('Resposta inesperada da OpenAI:', JSON.stringify(data));
       res.status(500).json({ response: 'Erro ao processar a resposta do GPT.' });
     }
   } catch (error) {
     console.error('Erro na requisição à OpenAI:', error);
     res.status(500).json({ response: 'Erro na comunicação com o GPT.' });
   }
+});
+
+// Redirecionamento raiz para index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.use(express.static('public'));
