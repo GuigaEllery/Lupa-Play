@@ -1,58 +1,39 @@
-
-// Arquivo: server.js (ajustado para acessar "/" do Worker)
-
 const express = require('express');
-const fetch = require('node-fetch');
-const cors = require('cors');
+const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(express.static('public'));
 app.use(express.json());
 
+// Rota principal simulada
 app.post('/api/lupa-play', async (req, res) => {
-  const userMessage = req.body.message;
+  const { message } = req.body;
+  // Substitua abaixo pela integração real com seu Worker/IA
+  res.json({ response: "Resposta simulada para: " + message });
+});
 
-  try {
-    const response = await fetch('https://lupa-play-worker.ellery-guilherme.workers.dev', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // x-api-key: process.env.LUPA_PLAY_API_KEY (adicione aqui no futuro, se desejar proteger)
-      },
-      body: JSON.stringify({ prompt: userMessage })
-    });
+// Rota para armazenar feedbacks
+app.post('/api/lupa-play-feedback', (req, res) => {
+  const feedback = req.body;
+  const filePath = path.join(__dirname, 'feedbacks.json');
 
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      const texto = await response.text();
-      return res.status(502).json({ response: 'Resposta inesperada do Lupa Play: ' + texto.slice(0, 100) });
-    }
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ response: data.error || 'Erro na API do Lupa Play.' });
-    }
-
-    return res.json({ response: data.answer || 'Sem resposta interpretável.' });
-
-  } catch (error) {
-    console.error('Erro ao acessar o Lupa Play Worker:', error);
-    return res.status(500).json({ response: 'Erro ao acessar o Lupa Play.' });
+  let allFeedbacks = [];
+  if (fs.existsSync(filePath)) {
+    const data = fs.readFileSync(filePath);
+    allFeedbacks = JSON.parse(data);
   }
-});
 
-// Redirecionamento raiz para index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+  allFeedbacks.push({
+    timestamp: new Date().toISOString(),
+    ...feedback
+  });
 
-app.use(express.static('public'));
+  fs.writeFileSync(filePath, JSON.stringify(allFeedbacks, null, 2));
+  res.status(200).json({ message: "Feedback registrado com sucesso." });
+});
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
