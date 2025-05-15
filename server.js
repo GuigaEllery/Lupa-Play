@@ -1,11 +1,11 @@
 
-// Arquivo: server.js (revisado)
-// Agora redireciona as requisições para o Worker da Cloudflare (lupa-play-worker)
+// Arquivo: server.js (ajustado para acessar "/" do Worker)
 
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,11 +17,20 @@ app.post('/api/lupa-play', async (req, res) => {
   const userMessage = req.body.message;
 
   try {
-    const response = await fetch('https://lupa-play-worker.ellery-guilherme.workers.dev/ask', {
+    const response = await fetch('https://lupa-play-worker.ellery-guilherme.workers.dev', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+        // x-api-key: process.env.LUPA_PLAY_API_KEY (adicione aqui no futuro, se desejar proteger)
+      },
       body: JSON.stringify({ prompt: userMessage })
     });
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const texto = await response.text();
+      return res.status(502).json({ response: 'Resposta inesperada do Lupa Play: ' + texto.slice(0, 100) });
+    }
 
     const data = await response.json();
 
