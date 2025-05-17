@@ -13,10 +13,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const MODEL_NAME = 'models/gemini-2.0-flash';
+const MODEL_NAME = 'models/gemini-2.5-pro-preview-05-06';
 const API_KEY = process.env.GEMINI_API_KEY;
 
-const SYSTEM_INSTRUCTION = `Você será um especialista em filmes e irá informar de forma direta e precisa, em quais plataformas de streaming um determinado filme pode ser assistido.\nSempre informe se o filme está disponível para os assinantes ou se é necessário alugar.\nEstas informações deverão ser sempre atualizadas no momento em que for questionado, a fim de garantir a confiabilidade na resposta.\nAlém disso, você será capaz de informar a avaliação baseada em críticas de sites confiáveis e premiações como Oscar, Festival de Cannes, Globo de Ouro, BAFTA etc.\nVocê também poderá recomendar filmes por listas famosas ou categorias como ação, suspense, drama, comédia, etc.\nSempre liste no máximo 3 títulos por vez com onde assistir e tipo de disponibilidade (assinantes ou aluguel).`;
+const SYSTEM_INSTRUCTION = `Você será um especialista em filmes e irá informar de forma direta e precisa, em quais plataformas de streaming um determinado filme pode ser assistido. Sempre informe se o filme está disponível para os assinantes, ou se é necessário alugar. Estas informações deverão ser sempre atualizadas no momento em que for questionado, a fim de garantir a confiabilidade na resposta. Por isso, será necessário buscar no catálogo de todos os Streamings disponíveis no Brasil. Além dis...
 
 app.post('/ask', async (req, res) => {
   const prompt = req.body.prompt;
@@ -28,7 +28,7 @@ app.post('/ask', async (req, res) => {
       systemInstruction: SYSTEM_INSTRUCTION,
     });
 
-    const result = await model.generateContentStream({
+    const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.7,
@@ -48,16 +48,12 @@ app.post('/ask', async (req, res) => {
       ]
     });
 
-    let answer = '';
-    for await (const chunk of result.stream) {
-      console.log('[DEBUG] Chunk recebido:', chunk);
-      if (chunk.text) answer += chunk.text;
-    }
-
-    if (!answer.trim()) console.warn('[WARNING] Nenhuma resposta textual recebida da Gemini');
-    res.json({ answer: answer.trim(), debug: true });
+    const response = result.response;
+    const text = response.text();
+    console.log("[INFO] Resposta da Gemini:", text);
+    res.json({ answer: text });
   } catch (error) {
-    console.error('Erro ao consultar Gemini:', error);
+    console.error("Erro na API Gemini:", error.message);
     res.status(500).json({ error: 'Erro ao consultar a API Gemini' });
   }
 });
