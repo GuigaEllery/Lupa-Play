@@ -1,4 +1,3 @@
-
 import os
 from flask import Flask, request, jsonify, send_from_directory
 from google import genai
@@ -23,30 +22,29 @@ Ao recomendar um filme, sempre informe onde pode ser assistido e se está dispon
 
 Quando solicitado para indicar um filme, sempre liste no máximo 3 títulos. Se o usuário solicitar mais opções, continue apresentando 3 títulos por vez.  Somente se requisitado, apresente uma lista maior."""
 
-app = Flask(__name__, static_folder="public", static_url_path="")
-
 def _build_contents(user_prompt: str):
+    """Few‑shot prompt conforme exportado do Google AI Studio"""
     return [
         types.Content(
             role="user",
-            parts=[types.Part.from_text("recomende um filme de suspense que tenha sido premiado.")]
+            parts=[types.Part.from_text(text="recomende um filme de suspense que tenha sido premiado.")]
         ),
         types.Content(
             role="model",
-            parts=[types.Part.from_text(
-                "Claro! Aqui estão algumas recomendações de suspense premiado..."
-            )]
+            parts=[types.Part.from_text(text="Claro! Aqui estão algumas recomendações de suspense premiado com detalhes de onde assistir …")]
         ),
         types.Content(
             role="user",
-            parts=[types.Part.from_text(user_prompt)]
+            parts=[types.Part.from_text(text=user_prompt)]
         ),
     ]
 
+app = Flask(__name__, static_folder="public", static_url_path="")
 
 @app.post("/ask")
 def ask():
-    prompt = (request.get_json() or {}).get("prompt", "").strip()
+    payload = request.get_json() or {}
+    prompt = payload.get("prompt", "").strip()
     if not prompt:
         return jsonify(error="Prompt vazio."), 400
 
@@ -56,14 +54,21 @@ def ask():
             contents=_build_contents(prompt),
             config=types.GenerateContentConfig(
                 response_mime_type="text/plain",
-                system_instruction=[types.Part.from_text(SYSTEM_INSTRUCTION)],
+                system_instruction=SYSTEM_INSTRUCTION,
             ),
         )
         answer = "".join(chunk.text for chunk in stream)
         return jsonify(answer=answer)
     except Exception as exc:
-        app.logger.exception("Erro na API Gemini: {}".format(exc))
-        return jsonify(error="Erro ao consultar a API Gemini: {}".format(exc)), 500
+        app.logger.exception("Erro na API Gemini: %s", exc)
+        return jsonify(error=str(exc)), 500
+
+
+@app.post("/feedback")
+def feedback():
+    data = request.get_json() or {}
+    app.logger.info("Feedback recebido: %s", data)
+    return jsonify(message="Feedback recebido com sucesso"), 200
 
 
 @app.route("/", defaults={"path": ""})
