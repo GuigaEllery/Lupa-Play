@@ -13,7 +13,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const MODEL_NAME = 'models/gemini-2.5-pro-preview-05-06';
+const MODEL_NAME = 'gemini-2.5-pro-preview-05-06';
 const API_KEY = process.env.GEMINI_API_KEY;
 
 /**
