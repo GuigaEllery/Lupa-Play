@@ -1,12 +1,13 @@
 {
-  "name": "lupa-play-render",
+  "name": "lupa-play-gemini",
   "version": "1.0.0",
-  "description": "Lupa Play - Full App (Frontend + Backend) para Render",
+  "description": "Lupa Play App com integração API Gemini",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.4.0",
     "axios": "^1.6.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

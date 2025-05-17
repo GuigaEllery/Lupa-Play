@@ -2,34 +2,34 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const axios = require('axios');
-
 require('dotenv').config();
+
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public'))); // Servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Rotas de API
+const MODEL_NAME = 'gemini-1.5-flash';
+const API_KEY = process.env.GEMINI_API_KEY;
+
 app.post('/ask', async (req, res) => {
   const prompt = req.body.prompt;
 
   try {
-    const response = await axios.post(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GEMINI_API_KEY,
-      {
-        contents: [{ parts: [{ text: prompt }] }]
-      }
-    );
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
-    const answer = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta';
-    res.json({ answer });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({ answer: text });
   } catch (error) {
-    console.error(error.response?.data || error.message);
+    console.error('Erro na API Gemini:', error.message);
     res.status(500).json({ error: 'Erro ao consultar a API Gemini' });
   }
 });
@@ -40,7 +40,6 @@ app.post('/feedback', (req, res) => {
   res.status(200).json({ message: 'Feedback recebido com sucesso' });
 });
 
-// Rota catch-all para SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
