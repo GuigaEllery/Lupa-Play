@@ -160,12 +160,16 @@
       responseBox.textContent = "Buscando...";
 
       try {
-        const simulatedResponse = {
-          answer: `Você pesquisou: "${input}". Esta é uma resposta simulada.`
-        };
+        const res = await fetch("https://SEU-BACKEND-RENDER.onrender.com/ask", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ prompt: input })
+        });
 
-        await new Promise(resolve => setTimeout(resolve, 800));
-        responseBox.textContent = simulatedResponse.answer;
+        const data = await res.json();
+        responseBox.textContent = data.answer || "Nenhuma resposta recebida.";
       } catch (error) {
         responseBox.textContent = "Erro ao buscar resposta.";
         console.error(error);
@@ -174,8 +178,14 @@
 
     async function sendFeedback(type) {
       const input = document.getElementById("userInput").value;
-      console.log(`Feedback: ${type} para: ${input}`);
-      alert("Feedback simulado enviado. Obrigado!");
+      await fetch("https://SEU-BACKEND-RENDER.onrender.com/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ prompt: input, feedback: type })
+      });
+      alert("Feedback enviado. Obrigado!");
     }
   </script>
 </body>
