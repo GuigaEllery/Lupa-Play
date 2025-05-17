@@ -50,10 +50,12 @@ app.post('/ask', async (req, res) => {
 
     let answer = '';
     for await (const chunk of result.stream) {
+      console.log('[DEBUG] Chunk recebido:', chunk);
       if (chunk.text) answer += chunk.text;
     }
 
-    res.json({ answer: answer.trim() });
+    if (!answer.trim()) console.warn('[WARNING] Nenhuma resposta textual recebida da Gemini');
+    res.json({ answer: answer.trim(), debug: true });
   } catch (error) {
     console.error('Erro ao consultar Gemini:', error);
     res.status(500).json({ error: 'Erro ao consultar a API Gemini' });
