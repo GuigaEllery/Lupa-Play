@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: lupa-play-backend
+    name: lupa-play-app
     env: node
     plan: free
     buildCommand: npm install
@@ -8,5 +8,3 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false
-    autoDeploy: true
-    repo: https://github.com/seu-usuario/lupa-play-backend

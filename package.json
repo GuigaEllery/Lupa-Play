@@ -1,7 +1,7 @@
 {
-  "name": "lupa-play-backend",
+  "name": "lupa-play-render",
   "version": "1.0.0",
-  "description": "Backend para integração com API Gemini",
+  "description": "Lupa Play - Full App (Frontend + Backend) para Render",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
