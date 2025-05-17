@@ -9,7 +9,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const MODEL_NAME = 'models/gemini-2.5-pro-preview-05-06';
+const MODEL_NAME = 'gemini-2.5-pro-preview-05-06';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // ────────────────────────────────────────────────────────────────────────────────
