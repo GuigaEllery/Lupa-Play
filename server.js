@@ -1,58 +1,41 @@
-
-// Arquivo: server.js (ajustado para acessar "/" do Worker)
-
 const express = require('express');
-const fetch = require('node-fetch');
 const cors = require('cors');
-const path = require('path');
+const bodyParser = require('body-parser');
+const axios = require('axios');
+
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-app.post('/api/lupa-play', async (req, res) => {
-  const userMessage = req.body.message;
+app.post('/ask', async (req, res) => {
+  const prompt = req.body.prompt;
 
   try {
-    const response = await fetch('https://lupa-play-worker.ellery-guilherme.workers.dev', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // x-api-key: process.env.LUPA_PLAY_API_KEY (adicione aqui no futuro, se desejar proteger)
-      },
-      body: JSON.stringify({ prompt: userMessage })
-    });
+    const response = await axios.post(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GEMINI_API_KEY,
+      {
+        contents: [{ parts: [{ text: prompt }] }]
+      }
+    );
 
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      const texto = await response.text();
-      return res.status(502).json({ response: 'Resposta inesperada do Lupa Play: ' + texto.slice(0, 100) });
-    }
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ response: data.error || 'Erro na API do Lupa Play.' });
-    }
-
-    return res.json({ response: data.answer || 'Sem resposta interpretável.' });
-
+    const answer = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta';
+    res.json({ answer });
   } catch (error) {
-    console.error('Erro ao acessar o Lupa Play Worker:', error);
-    return res.status(500).json({ response: 'Erro ao acessar o Lupa Play.' });
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ error: 'Erro ao consultar a API Gemini' });
   }
 });
 
-// Redirecionamento raiz para index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.post('/feedback', (req, res) => {
+  const { prompt, feedback } = req.body;
+  console.log('Feedback recebido:', { prompt, feedback });
+  res.status(200).json({ message: 'Feedback recebido com sucesso' });
 });
 
-app.use(express.static('public'));
-
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });

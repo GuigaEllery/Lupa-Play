@@ -1,10 +1,12 @@
 services:
   - type: web
-    name: lupa-play
+    name: lupa-play-backend
     env: node
     plan: free
-    buildCommand: "npm install"
-    startCommand: "npm start"
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
-      - key: OPENAI_API_KEY
-        value: sua-chave-aqui
+      - key: GEMINI_API_KEY
+        sync: false
+    autoDeploy: true
+    repo: https://github.com/seu-usuario/lupa-play-backend
