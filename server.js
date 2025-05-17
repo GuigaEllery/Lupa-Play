@@ -1,3 +1,28 @@
+
+const express = require('express');
+const fetch = require('node-fetch');
+const app = express();
+app.use(express.json());
+
+// Endpoint intermediário para consultar o microserviço Gemini
+app.post('/api/gemini', async (req, res) => {
+  const { query } = req.body;
+  try {
+    const response = await fetch('http://localhost:8080/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+
+    const data = await response.json();
+    res.json({ response: data.response });
+  } catch (error) {
+    console.error('Erro ao consultar o serviço Gemini:', error);
+    res.status(500).json({ error: 'Erro ao consultar o serviço Gemini' });
+  }
+});
+
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');

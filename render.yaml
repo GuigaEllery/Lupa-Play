@@ -1,10 +1,23 @@
+
 services:
   - type: web
-    name: lupa-play-app
+    name: lupa-play-web
     env: node
-    plan: free
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true
+
+  - type: web
+    name: gemini-service
+    env: python
+    buildCommand: pip install -r gemini_service/requirements.txt
+    startCommand: python3 gemini_service/app.py
+    plan: free
     envVars:
       - key: GEMINI_API_KEY
         sync: false
+    autoDeploy: true
