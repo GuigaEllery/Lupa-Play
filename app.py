@@ -33,9 +33,11 @@ def ask_agent():
 
     try:
         response = requests.post(EVO_AI_URL, headers=headers, json=payload)
+        app.logger.info("Resposta bruta da EVO AI: %s", response.text)
         response.raise_for_status()
         return jsonify(response.json())
     except requests.exceptions.RequestException as e:
+        app.logger.error("Erro na requisição à EVO AI: %s", e)
         return jsonify({"error": str(e)}), 500
 
 @app.route("/", defaults={"path": "index.html"})
