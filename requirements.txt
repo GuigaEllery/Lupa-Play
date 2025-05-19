@@ -1,4 +1,4 @@
 flask
-requests  # Adicionando a biblioteca requests
+requests
 python-dotenv
 gunicorn
