@@ -1,48 +1,62 @@
 
 import os
-import requests
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-EVO_AI_URL = "https://api-evoai.evoapicloud.com/api/v1/a2a/2757cd88-6801-429f-94b7-34867330a826"
-EVO_API_KEY = os.getenv("EVO_API_KEY")
+EVOAI_API_URL = "https://api-evoai.evoapicloud.com/api/v1/a2a/2757cd88-6801-429f-94b7-34867330a826"
+EVOAI_API_KEY = os.getenv("EVOAI_API_KEY")
 
-if not EVO_API_KEY:
-    raise RuntimeError("Defina EVO_API_KEY no ambiente.")
+if not EVOAI_API_KEY:
+    raise RuntimeError("Defina EVOAI_API_KEY no ambiente.")
 
-app = Flask(__name__, static_folder="public")
-CORS(app)  # Habilita CORS para permitir chamadas de navegadores externos
+app = Flask(__name__, static_folder="public", static_url_path="")
 
-@app.route("/ask", methods=["POST"])
-def ask_agent():
-    data = request.get_json()
-    user_message = data.get("message") or data.get("prompt")
-
-    if not user_message:
-        return jsonify({"error": "Mensagem não fornecida"}), 400
+@app.post("/ask")
+def ask():
+    payload = request.get_json() or {}
+    prompt = payload.get("prompt", "").strip()
+    if not prompt:
+        return jsonify(error="Prompt vazio."), 400
 
     headers = {
-        "Content-Type": "application/json",
-        "x-api-key": EVO_API_KEY
+        "x-api-key": EVOAI_API_KEY,
+        "Content-Type": "application/json"
     }
-
-    payload = {
-        "message": user_message
+    data = {
+        "text": prompt
     }
 
     try:
-        response = requests.post(EVO_AI_URL, headers=headers, json=payload)
-        app.logger.info("Resposta bruta da EVO AI: %s", response.text)
-        response.raise_for_status()
-        return jsonify(response.json())
-    except requests.exceptions.RequestException as e:
-        app.logger.error("Erro na requisição à EVO AI: %s", e)
-        return jsonify({"error": str(e)}), 500
+        response = requests.post(EVOAI_API_URL, headers=headers, json=data)
+        response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+        answer = response.json().get("response")  # Adjust based on actual EVO AI response structure
+        return jsonify(answer=answer)
+    except requests.exceptions.RequestException as exc:
+        app.logger.exception("Erro ao chamar a API EVO AI: %s", exc)
+        return jsonify(error=str(exc)), 500
+    except ValueError as exc:
+        app.logger.exception("Erro ao decodificar a resposta da API EVO AI: %s", exc)
+        return jsonify(error=str(exc)), 500
 
-@app.route("/", defaults={"path": "index.html"})
+
+@app.post("/feedback")
+def feedback():
+    data = request.get_json() or {}
+    app.logger.info("Feedback recebido: %s", data)
+    return jsonify(message="Feedback recebido com sucesso"), 200
+
+
+@app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
-def serve_static(path):
-    return send_from_directory(app.static_folder, path)
+def frontend(path):
+    target = os.path.join(app.static_folder, path)
+    if path and os.path.exists(target):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))

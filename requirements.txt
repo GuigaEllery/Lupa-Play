@@ -1,6 +1,4 @@
 flask
-google-genai>=1.10.0
+requests  # Adicionando a biblioteca requests
 python-dotenv
 gunicorn
-
-flask-cors
