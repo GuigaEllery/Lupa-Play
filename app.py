@@ -1,89 +1,67 @@
 
-import os
-from flask import Flask, request, jsonify, Response, send_from_directory
-import requests
-import json
+import os, json, uuid, requests
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 load_dotenv()
 
-EVOAI_API_URL = "https://api-evoai.evoapicloud.com/api/v1/a2a/2757cd88-6801-429f-94b7-34867330a826"
-EVOAI_API_KEY = os.getenv("EVOAI_API_KEY")
+EVO_AI_URL = "https://api-evoai.evoapicloud.com/api/v1/a2a/2757cd88-6801-429f-94b7-34867330a826"
+EVO_API_KEY = os.environ.get("EVO_API_KEY")
 
-if not EVOAI_API_KEY:
-    raise RuntimeError("Defina EVOAI_API_KEY no ambiente.")
+if not EVO_API_KEY:
+    raise RuntimeError("Defina a variável de ambiente EVO_API_KEY no Render")
 
-app = Flask(__name__, static_folder="public", static_url_path="")
+HEADERS = {
+    "Content-Type": "application/json",
+    "x-api-key": EVO_API_KEY
+}
 
-def sse_format(data: str) -> str:
-    return f"data: {data}\n\n"
+app = Flask(__name__, static_folder="public")
+CORS(app)
 
-def evoai_stream(prompt: str):
-    headers = {
-        "x-api-key": EVOAI_API_KEY,
-        "Content-Type": "application/json",
-        "Accept": "text/event-stream"  # Importante para SSE
-    }
-    data = {
+def call_evo_ai(message:str)->str:
+    """Envia a pergunta para o agente EVO AI via tasks/send
+    e devolve o texto da resposta."""
+    payload = {
         "jsonrpc": "2.0",
-        "id": "call-123",
-        "method": "tasks/sendSubscribe",
+        "id": f"call-{uuid.uuid4()}",
+        "method": "tasks/send",
         "params": {
-            "id": "task-456",
-            "sessionId": "session-789",
+            "id": f"task-{uuid.uuid4()}",
+            "sessionId": f"session-{uuid.uuid4()}",
             "message": {
                 "role": "user",
                 "parts": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    }
+                    {"type": "text", "text": message}
                 ]
             }
         }
     }
+    resp = requests.post(EVO_AI_URL, headers=HEADERS, data=json.dumps(payload), timeout=60)
+    resp.raise_for_status()
+    resp_json = resp.json()
     try:
-        response = requests.post(EVOAI_API_URL, headers=headers, json=data, stream=True)
-        response.raise_for_status()
+        text = resp_json["result"]["status"]["message"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        text = json.dumps(resp_json)  # devolve bruto em caso inesperado
+    return text
 
-        for line in response.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8')
-                if decoded_line.startswith("data:"):
-                    json_data = decoded_line[6:]  # Remover "data: "
-                    yield sse_format(json_data)
-
-    except requests.exceptions.RequestException as e:
-        yield sse_format(json.dumps({"error": str(e)}))
-    except Exception as e:
-        yield sse_format(json.dumps({"error": "Erro desconhecido"}))
-
-
-@app.post("/ask")
+@app.route("/ask", methods=["POST"])
 def ask():
-    payload = request.get_json() or {}
-    prompt = payload.get("prompt", "").strip()
-    if not prompt:
-        return jsonify(error="Prompt vazio."), 400
-
-    return Response(evoai_stream(prompt), mimetype="text/event-stream")
-
-
-@app.post("/feedback")
-def feedback():
     data = request.get_json() or {}
-    app.logger.info("Feedback recebido: %s", data)
-    return jsonify(message="Feedback recebido com sucesso"), 200
+    user_msg = data.get("message") or data.get("prompt") or ""
+    if not user_msg:
+        return jsonify({"error": "Mensagem vazia"}), 400
+    try:
+        answer = call_evo_ai(user_msg)
+        return jsonify({"text": answer})
+    except Exception as e:
+        app.logger.error("Erro EVO AI: %s", e)
+        return jsonify({"error": str(e)}), 500
 
-
-@app.route("/", defaults={"path": ""})
+# arquivos estáticos (single‑page)
+@app.route("/", defaults={"path": "index.html"})
 @app.route("/<path:path>")
-def frontend(path):
-    target = os.path.join(app.static_folder, path)
-    if path and os.path.exists(target):
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, "index.html")
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+def static_files(path):
+    return send_from_directory(app.static_folder, path)
