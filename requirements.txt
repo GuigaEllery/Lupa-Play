@@ -2,3 +2,5 @@ flask
 google-genai>=1.10.0
 python-dotenv
 gunicorn
+
+flask-cors

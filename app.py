@@ -2,6 +2,7 @@
 import os
 import requests
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,11 +14,12 @@ if not EVO_API_KEY:
     raise RuntimeError("Defina EVO_API_KEY no ambiente.")
 
 app = Flask(__name__, static_folder="public")
+CORS(app)  # Habilita CORS para permitir chamadas de navegadores externos
 
 @app.route("/ask", methods=["POST"])
 def ask_agent():
     data = request.get_json()
-    user_message = data.get("message") or data.get("prompt")  # Compatibilidade com versões anteriores
+    user_message = data.get("message") or data.get("prompt")
 
     if not user_message:
         return jsonify({"error": "Mensagem não fornecida"}), 400
