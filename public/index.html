@@ -146,10 +146,10 @@
         const res = await fetch("/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input })
+          body: JSON.stringify({ prompt: input })
         });
         const data = await res.json();
-        responseBox.textContent = data.text || "Nenhuma resposta recebida.";
+        responseBox.textContent = data.answer || "Nenhuma resposta recebida.";
       } catch (error) {
         responseBox.textContent = "Erro ao buscar resposta.";
         console.error(error);
@@ -160,7 +160,7 @@
       await fetch("/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input })
+        body: JSON.stringify({ prompt: input, feedback: type })
       });
       alert("Feedback enviado. Obrigado!");
     }
