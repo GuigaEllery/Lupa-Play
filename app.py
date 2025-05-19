@@ -17,7 +17,7 @@ app = Flask(__name__, static_folder="public")
 @app.route("/ask", methods=["POST"])
 def ask_agent():
     data = request.get_json()
-    user_message = data.get("message")
+    user_message = data.get("message") or data.get("prompt")  # Compatibilidade com versões anteriores
 
     if not user_message:
         return jsonify({"error": "Mensagem não fornecida"}), 400
