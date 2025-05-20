@@ -82,19 +82,11 @@ def ask():
                 for s in sources if s['region'] == 'BR'
             ]
             if stream_list:
-                evo_response += "
-
-📺 Plataformas disponíveis no Brasil:
-- " + "
-- ".join(stream_list)
+                evo_response += "\n\n📺 Plataformas disponíveis no Brasil:\n- " + "\n- ".join(stream_list)
             else:
-                evo_response += f"
-
-⚠️ O título '{title['name']}' não está disponível no Brasil no momento."
+                evo_response += f"\n\n⚠️ O título '{title['name']}' não está disponível no Brasil no momento."
         else:
-            evo_response += f"
-
-🔍 Nenhum resultado encontrado nas plataformas de streaming para: '{user_msg}'."
+            evo_response += f"\n\n🔍 Nenhum resultado encontrado nas plataformas de streaming para: '{user_msg}'."
 
         return jsonify({ "text": evo_response })
     except Exception as e:
